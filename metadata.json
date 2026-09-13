@@ -1,0 +1,6 @@
+{
+  "name": "Chennai Tourist Guide",
+  "description": "Discover the best of Chennai with our all-in-one travel companion: local transport, live parking, attractions, restaurant reservations, shopping hubs, hotel bookings, and trip planning.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
