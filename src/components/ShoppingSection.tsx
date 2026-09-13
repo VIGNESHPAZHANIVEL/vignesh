@@ -18,9 +18,10 @@ import { SHOPPING_DATA } from "../data/chennaiData";
 
 interface ShoppingSectionProps {
   searchQuery: string;
+  onLocateOnMap?: (id: string) => void;
 }
 
-export const ShoppingSection: React.FC<ShoppingSectionProps> = ({ searchQuery }) => {
+export const ShoppingSection: React.FC<ShoppingSectionProps> = ({ searchQuery, onLocateOnMap }) => {
   const [activeCategory, setActiveCategory] = useState<string>("All");
   const [directionsNotice, setDirectionsNotice] = useState<string | null>(null);
 
@@ -184,12 +185,18 @@ export const ShoppingSection: React.FC<ShoppingSectionProps> = ({ searchQuery })
               {/* Action Button */}
               <div className="p-4 pt-0">
                 <button
-                  onClick={() => handleGetDirections(spot)}
+                  onClick={() => {
+                    if (onLocateOnMap) {
+                      onLocateOnMap(`shopping-${spot.id}`);
+                    } else {
+                      handleGetDirections(spot);
+                    }
+                  }}
                   className="w-full py-2 rounded-xl bg-stone-800 hover:bg-stone-700 text-stone-200 text-xs font-semibold border border-stone-700 transition-colors flex items-center justify-center gap-1.5"
                   id={`shop-directions-btn-${spot.id}`}
                 >
                   <Navigation className="w-3.5 h-3.5 text-amber-400" />
-                  <span>Locate Store</span>
+                  <span>Locate Store on Map</span>
                 </button>
               </div>
             </div>

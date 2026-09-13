@@ -1,6 +1,7 @@
 import React from "react";
 import {
   Compass,
+  MapPin,
   Train,
   Car,
   Landmark,
@@ -49,6 +50,7 @@ export const Header: React.FC<HeaderProps> = ({
 
   const navItems: { id: ActiveTab; label: string; icon: React.ReactNode }[] = [
     { id: "explore", label: "Overview", icon: <Compass className="w-4 h-4" /> },
+    { id: "map", label: "Google Map", icon: <MapPin className="w-4 h-4 text-amber-400" /> },
     { id: "transport", label: "Local Transport", icon: <Train className="w-4 h-4" /> },
     { id: "parking", label: "Live Parking", icon: <Car className="w-4 h-4" /> },
     { id: "places", label: "Top Places", icon: <Landmark className="w-4 h-4" /> },

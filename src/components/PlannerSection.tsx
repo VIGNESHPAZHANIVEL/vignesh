@@ -16,16 +16,27 @@ import {
   PhoneCall,
   Sparkles,
   HeartHandshake,
+  Train,
+  Car,
+  Utensils,
+  ShoppingBag,
+  Hotel as HotelIcon,
+  ChevronRight,
+  ExternalLink,
 } from "lucide-react";
-import { SavedTripItem, TableReservation, HotelBooking } from "../types";
-import { CHENNAI_WEATHER, CURATED_ITINERARIES, LOCAL_CUSTOMS_AND_TIPS } from "../data/chennaiData";
+import { SavedTripItem, TableReservation, HotelBooking, ActiveTab, ParkingLot } from "../types";
+import { CHENNAI_WEATHER, CURATED_ITINERARIES, LOCAL_CUSTOMS_AND_TIPS, PLACES_DATA } from "../data/chennaiData";
+import { getNearbyForPlace } from "../data/nearbyHelper";
 
 interface PlannerSectionProps {
   savedItems: SavedTripItem[];
   onRemoveSavedItem: (id: string) => void;
   reservations: TableReservation[];
   hotelBookings: HotelBooking[];
-  onOpenAiPlanner: () => void;
+  onOpenAiPlanner: (customPrompt?: string) => void;
+  onLocateOnMap?: (id: string) => void;
+  onSelectTab?: (tab: ActiveTab) => void;
+  liveParkingLots?: ParkingLot[];
 }
 
 export const PlannerSection: React.FC<PlannerSectionProps> = ({
@@ -34,10 +45,14 @@ export const PlannerSection: React.FC<PlannerSectionProps> = ({
   reservations,
   hotelBookings,
   onOpenAiPlanner,
+  onLocateOnMap,
+  onSelectTab,
+  liveParkingLots = [],
 }) => {
   const [selectedItinerary, setSelectedItinerary] = useState(CURATED_ITINERARIES[0]);
   const [activeTab, setActiveTab] = useState<"itineraries" | "myTrip" | "customs">("itineraries");
   const [customNote, setCustomNote] = useState("");
+  const [expandedPlaceId, setExpandedPlaceId] = useState<string | null>(null);
   const [userNotes, setUserNotes] = useState<string[]>([
     "Remember to try Filter Coffee at Rayar's Mess before 9:00 AM.",
     "Carry modest cotton attire for Kapaleeshwarar Temple visit.",
@@ -299,30 +314,210 @@ export const PlannerSection: React.FC<PlannerSectionProps> = ({
                 </div>
 
                 {savedItems.length === 0 ? (
-                  <p className="text-xs text-stone-400 py-4 text-center bg-stone-950/60 rounded-xl border border-stone-800">
-                    You haven&apos;t saved any places yet. Browse &quot;Top Places to Visit&quot; and click &quot;Add&quot; to build your itinerary!
-                  </p>
-                ) : (
-                  <div className="space-y-2">
-                    {savedItems.map((item) => (
-                      <div
-                        key={item.id}
-                        className="flex items-center justify-between p-3 rounded-xl bg-stone-950 border border-stone-800"
+                  <div className="text-center py-6 px-4 bg-stone-950/60 rounded-xl border border-stone-800 space-y-2">
+                    <p className="text-xs text-stone-400">
+                      You haven&apos;t saved any places yet. Browse &quot;Places to Visit&quot; and click &quot;Add&quot; to plan your trip around specific landmarks!
+                    </p>
+                    {onSelectTab && (
+                      <button
+                        onClick={() => onSelectTab("places")}
+                        className="px-3 py-1.5 rounded-lg bg-amber-600 hover:bg-amber-500 text-stone-950 text-xs font-bold transition inline-flex items-center gap-1.5"
                       >
-                        <div>
-                          <div className="font-semibold text-xs text-stone-100">{item.title}</div>
-                          <div className="text-[10px] text-stone-400">
-                            {item.category} • {item.area}
-                          </div>
-                        </div>
-                        <button
-                          onClick={() => onRemoveSavedItem(item.id)}
-                          className="p-1.5 rounded-lg text-stone-500 hover:text-rose-400 hover:bg-stone-800 transition-colors"
+                        <Compass className="w-3.5 h-3.5" />
+                        <span>Browse Places to Visit</span>
+                      </button>
+                    )}
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {/* Quick helper banner */}
+                    <div className="p-3 rounded-xl bg-teal-500/10 border border-teal-500/30 text-xs text-teal-300 flex items-center justify-between">
+                      <span>
+                        📍 Click on any saved place below to reveal nearby Metro routes, live parking slots, restaurants, and hotels.
+                      </span>
+                      <button
+                        onClick={() => {
+                          const placesNames = savedItems.map((i) => i.title).join(", ");
+                          onOpenAiPlanner(
+                            `Generate a step-by-step custom day-by-day Chennai trip itinerary based strictly on my saved places to visit: ${placesNames}. Recommend optimal visiting hours, metro connectivity, and nearby eateries.`
+                          );
+                        }}
+                        className="ml-2 px-2.5 py-1 rounded-lg bg-teal-600 hover:bg-teal-500 text-white font-bold text-[11px] whitespace-nowrap flex items-center gap-1 transition shadow"
+                      >
+                        <Sparkles className="w-3 h-3" />
+                        <span>Plan Route with AI</span>
+                      </button>
+                    </div>
+
+                    {savedItems.map((item) => {
+                      const isExpanded = expandedPlaceId === item.id;
+                      const nearbyContext = getNearbyForPlace(item.id, liveParkingLots);
+
+                      return (
+                        <div
+                          key={item.id}
+                          className="rounded-xl bg-stone-950 border border-stone-800 overflow-hidden transition-all"
                         >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      </div>
-                    ))}
+                          <div className="flex items-center justify-between p-3">
+                            <button
+                              onClick={() =>
+                                setExpandedPlaceId(isExpanded ? null : item.id)
+                              }
+                              className="flex-1 text-left flex items-center gap-2 group"
+                            >
+                              <ChevronRight
+                                className={`w-4 h-4 text-amber-400 transition-transform ${
+                                  isExpanded ? "rotate-90" : ""
+                                }`}
+                              />
+                              <div>
+                                <div className="font-semibold text-xs text-stone-100 group-hover:text-amber-400 transition">
+                                  {item.title}
+                                </div>
+                                <div className="text-[10px] text-stone-400">
+                                  {item.category} • {item.area}
+                                </div>
+                              </div>
+                            </button>
+
+                            <div className="flex items-center gap-1.5">
+                              {onLocateOnMap && (
+                                <button
+                                  onClick={() => onLocateOnMap(`place-${item.id}`)}
+                                  className="px-2 py-1 rounded-lg bg-stone-900 hover:bg-stone-800 text-amber-400 hover:text-amber-300 text-[11px] font-semibold border border-stone-800 transition flex items-center gap-1"
+                                  title="Pin on Google Map"
+                                >
+                                  <MapPin className="w-3 h-3" />
+                                  <span>Map</span>
+                                </button>
+                              )}
+
+                              <button
+                                onClick={() =>
+                                  setExpandedPlaceId(isExpanded ? null : item.id)
+                                }
+                                className="px-2 py-1 rounded-lg bg-stone-900 hover:bg-stone-800 text-stone-300 text-[11px] font-semibold border border-stone-800 transition"
+                              >
+                                {isExpanded ? "Close" : "Nearby"}
+                              </button>
+
+                              <button
+                                onClick={() => onRemoveSavedItem(item.id)}
+                                className="p-1.5 rounded-lg text-stone-500 hover:text-rose-400 hover:bg-stone-800 transition-colors"
+                                title="Remove from list"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </button>
+                            </div>
+                          </div>
+
+                          {/* Contextual Drawer for this Place */}
+                          {isExpanded && nearbyContext && (
+                            <div className="px-3 pb-3 pt-2 border-t border-stone-800/80 bg-stone-900/40 text-xs space-y-3">
+                              {/* Suggested Visiting Slot */}
+                              <div className="p-2.5 rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-200 text-[11px]">
+                                <strong className="text-amber-400">Optimal Slot: </strong>
+                                {nearbyContext.suggestedItineraryTimeSlot.idealTimeOfDay} ({nearbyContext.suggestedItineraryTimeSlot.duration})
+                                <div className="text-stone-300 mt-1">
+                                  {nearbyContext.suggestedItineraryTimeSlot.recommendedSequence}
+                                </div>
+                              </div>
+
+                              {/* Grid of Nearby Essentials */}
+                              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-[11px]">
+                                {/* 1. Transport */}
+                                <div className="p-2 rounded-lg bg-stone-950 border border-stone-800">
+                                  <div className="flex items-center gap-1 text-sky-400 font-bold mb-1">
+                                    <Train className="w-3 h-3" />
+                                    <span>Transit</span>
+                                  </div>
+                                  <div className="text-stone-300 font-medium truncate">
+                                    {nearbyContext.nearestTransitHub?.name || "Metro nearby"}
+                                  </div>
+                                  <span className="text-[10px] text-stone-400">
+                                    ~{nearbyContext.nearestTransitHub?.distanceKm} km away
+                                  </span>
+                                  {onSelectTab && (
+                                    <button
+                                      onClick={() => onSelectTab("transport")}
+                                      className="mt-1 text-[10px] text-sky-400 hover:underline block"
+                                    >
+                                      View routes →
+                                    </button>
+                                  )}
+                                </div>
+
+                                {/* 2. Parking */}
+                                <div className="p-2 rounded-lg bg-stone-950 border border-stone-800">
+                                  <div className="flex items-center gap-1 text-emerald-400 font-bold mb-1">
+                                    <Car className="w-3 h-3" />
+                                    <span>Parking</span>
+                                  </div>
+                                  <div className="text-stone-300 font-medium truncate">
+                                    {nearbyContext.nearbyParkingLots[0]?.lot.name || "Designated Lot"}
+                                  </div>
+                                  <span className="text-[10px] text-emerald-400 font-bold">
+                                    {nearbyContext.nearbyParkingLots[0]?.lot.available4W || "Plenty"} 4W slots
+                                  </span>
+                                  {onSelectTab && (
+                                    <button
+                                      onClick={() => onSelectTab("parking")}
+                                      className="mt-1 text-[10px] text-emerald-400 hover:underline block"
+                                    >
+                                      Check rates →
+                                    </button>
+                                  )}
+                                </div>
+
+                                {/* 3. Food */}
+                                <div className="p-2 rounded-lg bg-stone-950 border border-stone-800">
+                                  <div className="flex items-center gap-1 text-amber-400 font-bold mb-1">
+                                    <Utensils className="w-3 h-3" />
+                                    <span>Eatery</span>
+                                  </div>
+                                  <div className="text-stone-300 font-medium truncate">
+                                    {nearbyContext.nearbyRestaurants[0]?.restaurant.name || "South Indian"}
+                                  </div>
+                                  <span className="text-[10px] text-stone-400 truncate block">
+                                    {nearbyContext.nearbyRestaurants[0]?.restaurant.cuisine}
+                                  </span>
+                                  {onSelectTab && (
+                                    <button
+                                      onClick={() => onSelectTab("restaurants")}
+                                      className="mt-1 text-[10px] text-amber-400 hover:underline block"
+                                    >
+                                      Reserve table →
+                                    </button>
+                                  )}
+                                </div>
+
+                                {/* 4. Hotel Stay */}
+                                <div className="p-2 rounded-lg bg-stone-950 border border-stone-800">
+                                  <div className="flex items-center gap-1 text-rose-400 font-bold mb-1">
+                                    <HotelIcon className="w-3 h-3" />
+                                    <span>Nearby Stay</span>
+                                  </div>
+                                  <div className="text-stone-300 font-medium truncate">
+                                    {nearbyContext.nearbyHotels[0]?.hotel.name || "City Hotel"}
+                                  </div>
+                                  <span className="text-[10px] text-rose-400 font-bold">
+                                    ₹{nearbyContext.nearbyHotels[0]?.hotel.pricePerNight}/night
+                                  </span>
+                                  {onSelectTab && (
+                                    <button
+                                      onClick={() => onSelectTab("hotels")}
+                                      className="mt-1 text-[10px] text-rose-400 hover:underline block"
+                                    >
+                                      Book stay →
+                                    </button>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
                   </div>
                 )}
               </div>

@@ -29,6 +29,13 @@ export const HeroBanner: React.FC<HeroBannerProps> = ({
 }) => {
   const quickCategories = [
     {
+      tab: "map" as ActiveTab,
+      label: "Google Map",
+      desc: "Interactive pins & directions",
+      icon: <MapPin className="w-5 h-5 text-amber-400" />,
+      color: "hover:border-amber-500/50 hover:bg-amber-950/20",
+    },
+    {
       tab: "transport" as ActiveTab,
       label: "Local Transport",
       desc: "Metro, MTC buses, autos & rentals",
@@ -137,7 +144,7 @@ export const HeroBanner: React.FC<HeroBannerProps> = ({
         </div>
 
         {/* Quick Launch Cards Grid */}
-        <div className="mt-8 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-7 gap-2.5 sm:gap-3">
+        <div className="mt-8 grid grid-cols-2 sm:grid-cols-4 xl:grid-cols-8 gap-2.5 sm:gap-3">
           {quickCategories.map((cat) => (
             <button
               key={cat.tab}

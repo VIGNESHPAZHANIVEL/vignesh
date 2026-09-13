@@ -1,6 +1,7 @@
 export type ActiveTab =
   | "all"
   | "explore"
+  | "map"
   | "transport"
   | "parking"
   | "places"
@@ -8,6 +9,11 @@ export type ActiveTab =
   | "shopping"
   | "hotels"
   | "planner";
+
+export interface Coordinates {
+  lat: number;
+  lng: number;
+}
 
 export interface Place {
   id: string;
@@ -25,6 +31,7 @@ export interface Place {
   tips: string;
   nearestMetro?: string;
   audioGuideAvailable: boolean;
+  coordinates?: Coordinates;
 }
 
 export interface Restaurant {
@@ -42,6 +49,7 @@ export interface Restaurant {
   address: string;
   features: string[];
   menuHighlights: string[];
+  coordinates?: Coordinates;
 }
 
 export interface ShoppingSpot {
@@ -58,6 +66,7 @@ export interface ShoppingSpot {
   priceLevel: "Budget" | "Moderate" | "Premium" | "Luxury";
   address: string;
   bargainFriendly: boolean;
+  coordinates?: Coordinates;
 }
 
 export interface Hotel {
@@ -74,6 +83,7 @@ export interface Hotel {
   distanceToCentral: string;
   description: string;
   roomTypes: { name: string; price: number; capacity: string }[];
+  coordinates?: Coordinates;
 }
 
 export interface ParkingLot {
@@ -92,6 +102,7 @@ export interface ParkingLot {
   status: "Available" | "Filling Fast" | "Almost Full";
   occupancyPercent?: number;
   lastUpdated?: string;
+  coordinates?: Coordinates;
 }
 
 export interface MetroStation {
@@ -99,6 +110,22 @@ export interface MetroStation {
   line: "Blue" | "Green" | "Interchange";
   terminalFor?: string;
   popularFor: string;
+  coordinates?: Coordinates;
+}
+
+export interface MapMarkerItem {
+  id: string;
+  title: string;
+  subTitle?: string;
+  category: "attraction" | "restaurant" | "shopping" | "hotel" | "parking" | "metro";
+  categoryLabel: string;
+  area: string;
+  coordinates: Coordinates;
+  rating?: number;
+  image?: string;
+  info?: string;
+  extraBadge?: string;
+  dataRef?: any;
 }
 
 export interface ItineraryDayActivity {
@@ -157,6 +184,37 @@ export interface HotelBooking {
   guestPhone: string;
   bookingRef: string;
   status: "Confirmed";
+}
+
+export interface ParkingReservation {
+  id: string;
+  lotId: string;
+  lotName: string;
+  vehicleType: "4-Wheeler (Car)" | "2-Wheeler (Bike)";
+  vehicleNumber: string;
+  durationHours: number;
+  totalFee: number;
+  bookingRef: string;
+  bayNumber: string;
+  date: string;
+  time: string;
+  status: "Confirmed";
+}
+
+export interface PlaceTransitInfo {
+  nearestMetroStation: string;
+  metroLine: string;
+  metroDistance: string;
+  walkingTime: string;
+  busRoutes: string[];
+  nearestBusStop: string;
+  suburbanOrMRTS: string;
+  autoCabFares: {
+    fromCentral: string;
+    fromAirport: string;
+    fromTNagar: string;
+  };
+  navigationAdvice: string;
 }
 
 export interface SavedTripItem {

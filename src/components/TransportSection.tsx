@@ -13,10 +13,16 @@ import {
   Sparkles,
   Info,
   MapPin,
+  ExternalLink,
 } from "lucide-react";
 import { TRANSIT_HUBS } from "../data/chennaiData";
+import { CHENNAI_COORDINATES, getDirectionsUrl } from "../data/mapLocations";
 
-export const TransportSection: React.FC = () => {
+interface TransportSectionProps {
+  onLocateOnMap?: (id: string) => void;
+}
+
+export const TransportSection: React.FC<TransportSectionProps> = ({ onLocateOnMap }) => {
   const [origin, setOrigin] = useState("central");
   const [destination, setDestination] = useState("airport");
   const [activeTransportMode, setActiveTransportMode] = useState<"metro" | "bus" | "taxi" | "bike">("metro");
@@ -320,6 +326,43 @@ export const TransportSection: React.FC = () => {
               <p className="text-[11px] text-stone-400 mt-3 border-t border-stone-800 pt-2 italic">
                 {currentRoute.cab.tips}
               </p>
+            </div>
+          </div>
+
+          {/* Action bar for Google Maps Navigation */}
+          <div className="mt-4 pt-3 border-t border-stone-800 flex flex-wrap items-center justify-between gap-3">
+            <div className="text-xs text-stone-400 flex items-center gap-1.5">
+              <MapPin className="w-3.5 h-3.5 text-amber-400" />
+              <span>Route: <strong className="text-white">{originHub?.name}</strong> → <strong className="text-white">{destHub?.name}</strong></span>
+            </div>
+
+            <div className="flex items-center gap-2">
+              {onLocateOnMap && destHub && (
+                <button
+                  onClick={() => onLocateOnMap(`metro-${destHub.id}`)}
+                  className="px-3 py-1.5 rounded-lg bg-stone-800 hover:bg-stone-700 text-amber-400 text-xs font-semibold border border-stone-700 transition flex items-center gap-1.5"
+                >
+                  <MapPin className="w-3.5 h-3.5" />
+                  <span>View on Chennai Map</span>
+                </button>
+              )}
+
+              {destHub && CHENNAI_COORDINATES[destHub.id] && (
+                <a
+                  href={getDirectionsUrl(
+                    CHENNAI_COORDINATES[destHub.id].lat,
+                    CHENNAI_COORDINATES[destHub.id].lng,
+                    destHub.name
+                  )}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="px-3.5 py-1.5 rounded-lg bg-amber-500 hover:bg-amber-400 text-stone-950 font-bold text-xs transition flex items-center gap-1.5"
+                >
+                  <Navigation className="w-3.5 h-3.5" />
+                  <span>Open Directions in Google Maps</span>
+                  <ExternalLink className="w-3 h-3" />
+                </a>
+              )}
             </div>
           </div>
         </div>

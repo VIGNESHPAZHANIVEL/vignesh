@@ -14,7 +14,11 @@ import {
 } from "lucide-react";
 import { ParkingLot } from "../types";
 
-export const ParkingSection: React.FC = () => {
+interface ParkingSectionProps {
+  onLocateOnMap?: (id: string) => void;
+}
+
+export const ParkingSection: React.FC<ParkingSectionProps> = ({ onLocateOnMap }) => {
   const [parkingLots, setParkingLots] = useState<ParkingLot[]>([]);
   const [loading, setLoading] = useState(true);
   const [autoRefresh, setAutoRefresh] = useState(true);
@@ -270,20 +274,33 @@ export const ParkingSection: React.FC = () => {
                   </div>
 
                   {/* Pricing & CTA */}
-                  <div className="mt-4 pt-3 border-t border-stone-800 flex items-center justify-between">
+                  <div className="mt-4 pt-3 border-t border-stone-800 flex items-center justify-between gap-2">
                     <div>
                       <span className="text-[10px] text-stone-400 block">Parking Rate</span>
                       <span className="text-xs font-bold text-amber-400">₹{lot.ratePerHour}/hr</span>
                     </div>
 
-                    <button
-                      onClick={() => handleHoldSpot(lot)}
-                      className="px-3 py-1.5 rounded-lg bg-stone-800 hover:bg-amber-600 hover:text-stone-950 text-stone-200 text-xs font-semibold border border-stone-700 transition-all flex items-center gap-1"
-                      id={`hold-spot-btn-${lot.id}`}
-                    >
-                      <span>Hold Pass</span>
-                      <ArrowUpRight className="w-3.5 h-3.5" />
-                    </button>
+                    <div className="flex items-center gap-1.5">
+                      {onLocateOnMap && (
+                        <button
+                          onClick={() => onLocateOnMap(`parking-${lot.id}`)}
+                          className="px-2.5 py-1.5 rounded-lg bg-stone-800 hover:bg-stone-700 text-amber-400 text-xs font-semibold border border-stone-700 transition-all flex items-center gap-1"
+                          title="Locate parking on Google Map"
+                        >
+                          <MapPin className="w-3.5 h-3.5" />
+                          <span className="hidden sm:inline">Map</span>
+                        </button>
+                      )}
+
+                      <button
+                        onClick={() => handleHoldSpot(lot)}
+                        className="px-3 py-1.5 rounded-lg bg-stone-800 hover:bg-amber-600 hover:text-stone-950 text-stone-200 text-xs font-semibold border border-stone-700 transition-all flex items-center gap-1"
+                        id={`hold-spot-btn-${lot.id}`}
+                      >
+                        <span>Hold Pass</span>
+                        <ArrowUpRight className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
                   </div>
                 </div>
               );

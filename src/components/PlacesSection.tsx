@@ -13,9 +13,12 @@ import {
   Train,
   X,
   Sparkles,
+  Navigation,
+  Compass,
 } from "lucide-react";
-import { Place } from "../types";
+import { Place, ActiveTab, TableReservation, HotelBooking, ParkingLot } from "../types";
 import { PLACES_DATA } from "../data/chennaiData";
+import { PlaceExplorerModal } from "./PlaceExplorerModal";
 
 interface PlacesSectionProps {
   searchQuery: string;
@@ -27,12 +30,24 @@ interface PlacesSectionProps {
     category: string;
     area: string;
   }) => void;
+  onLocateOnMap?: (id: string) => void;
+  onSelectTab?: (tab: ActiveTab) => void;
+  onTableReserved?: (reservation: TableReservation) => void;
+  onHotelBooked?: (booking: HotelBooking) => void;
+  liveParkingLots?: ParkingLot[];
+  onOpenAiPlannerForPlace?: (placeName: string) => void;
 }
 
 export const PlacesSection: React.FC<PlacesSectionProps> = ({
   searchQuery,
   savedItemIds,
   onToggleSaveItem,
+  onLocateOnMap,
+  onSelectTab,
+  onTableReserved,
+  onHotelBooked,
+  liveParkingLots = [],
+  onOpenAiPlannerForPlace,
 }) => {
   const [selectedCategory, setSelectedCategory] = useState<string>("All");
   const [activePlaceModal, setActivePlaceModal] = useState<Place | null>(null);
@@ -220,10 +235,23 @@ export const PlacesSection: React.FC<PlacesSectionProps> = ({
                 <div className="p-4 pt-0 flex items-center gap-2">
                   <button
                     onClick={() => setActivePlaceModal(place)}
-                    className="flex-1 py-2 rounded-xl bg-stone-800 hover:bg-stone-700 text-stone-200 text-xs font-semibold border border-stone-700 transition-colors"
+                    className="flex-1 py-2 rounded-xl bg-amber-600/20 hover:bg-amber-500 hover:text-stone-950 text-amber-300 text-xs font-bold border border-amber-500/40 transition-all flex items-center justify-center gap-1.5"
+                    title="View local transport, live parking, food, shopping, stays, and plan trip for this place"
                   >
-                    View Guide
+                    <Compass className="w-3.5 h-3.5" />
+                    <span>Explore Area</span>
                   </button>
+
+                  {onLocateOnMap && (
+                    <button
+                      onClick={() => onLocateOnMap(`place-${place.id}`)}
+                      className="px-2.5 py-2 rounded-xl bg-stone-800 hover:bg-stone-700 text-amber-400 hover:text-amber-300 text-xs font-semibold border border-stone-700 transition-colors flex items-center gap-1"
+                      title="Pin on Google Map"
+                    >
+                      <MapPin className="w-3.5 h-3.5" />
+                      <span className="hidden sm:inline">Map</span>
+                    </button>
+                  )}
 
                   <button
                     onClick={() =>
@@ -251,97 +279,20 @@ export const PlacesSection: React.FC<PlacesSectionProps> = ({
           })}
         </div>
 
-        {/* Detailed Modal */}
+        {/* Complete Place-Based Contextual Explorer Modal */}
         {activePlaceModal && (
-          <div className="fixed inset-0 z-50 bg-black/75 backdrop-blur-sm flex items-center justify-center p-4">
-            <div className="bg-stone-900 border border-stone-700 rounded-2xl max-w-lg w-full max-h-[90vh] overflow-y-auto text-stone-100 shadow-2xl relative">
-              <button
-                onClick={() => setActivePlaceModal(null)}
-                className="absolute top-4 right-4 p-2 rounded-xl bg-black/60 text-stone-300 hover:text-white border border-stone-700 z-10"
-              >
-                <X className="w-4 h-4" />
-              </button>
-
-              <div className="relative h-56 w-full">
-                <img
-                  src={activePlaceModal.image}
-                  alt={activePlaceModal.name}
-                  referrerPolicy="no-referrer"
-                  className="w-full h-full object-cover"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-stone-900 via-transparent to-black/40" />
-                <div className="absolute bottom-4 left-4 right-4">
-                  <span className="text-amber-400 text-xs font-bold block">
-                    {activePlaceModal.tamilName}
-                  </span>
-                  <h3 className="text-xl font-bold font-serif text-white">
-                    {activePlaceModal.name}
-                  </h3>
-                </div>
-              </div>
-
-              <div className="p-6 space-y-4">
-                <p className="text-xs sm:text-sm text-stone-300 leading-relaxed">
-                  {activePlaceModal.description}
-                </p>
-
-                <div className="p-3.5 rounded-xl bg-stone-950 border border-stone-800 space-y-2 text-xs">
-                  <div className="flex justify-between">
-                    <span className="text-stone-400">Timings:</span>
-                    <span className="text-stone-200 font-semibold">{activePlaceModal.timings}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-stone-400">Entry Fee:</span>
-                    <span className="text-emerald-400 font-semibold">{activePlaceModal.entryFee}</span>
-                  </div>
-                  {activePlaceModal.nearestMetro && (
-                    <div className="flex justify-between">
-                      <span className="text-stone-400">Nearest Metro/Train:</span>
-                      <span className="text-sky-400 font-semibold">{activePlaceModal.nearestMetro}</span>
-                    </div>
-                  )}
-                </div>
-
-                <div>
-                  <h4 className="text-xs font-bold text-amber-400 uppercase tracking-wider mb-2">
-                    Must-See Highlights
-                  </h4>
-                  <ul className="space-y-1 text-xs text-stone-300">
-                    {activePlaceModal.highlights.map((h, i) => (
-                      <li key={i} className="flex items-center gap-2">
-                        <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />
-                        <span>{h}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-
-                <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs">
-                  <strong>Insider Travel Tip:</strong> {activePlaceModal.tips}
-                </div>
-
-                <div className="pt-2 flex gap-3">
-                  <button
-                    onClick={() => {
-                      onToggleSaveItem({
-                        id: activePlaceModal.id,
-                        type: "place",
-                        title: activePlaceModal.name,
-                        category: activePlaceModal.category,
-                        area: activePlaceModal.area,
-                      });
-                      setActivePlaceModal(null);
-                    }}
-                    className="flex-1 py-2.5 rounded-xl bg-amber-600 hover:bg-amber-500 text-stone-950 font-bold text-xs transition-colors"
-                  >
-                    {savedItemIds.includes(activePlaceModal.id)
-                      ? "Remove from Itinerary"
-                      : "Add to My Chennai Itinerary"}
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
+          <PlaceExplorerModal
+            place={activePlaceModal}
+            onClose={() => setActivePlaceModal(null)}
+            savedItemIds={savedItemIds}
+            onToggleSaveItem={onToggleSaveItem}
+            onLocateOnMap={onLocateOnMap}
+            onSelectTab={onSelectTab}
+            onTableReserved={onTableReserved}
+            onHotelBooked={onHotelBooked}
+            liveParkingLots={liveParkingLots}
+            onOpenAiPlannerForPlace={onOpenAiPlannerForPlace}
+          />
         )}
       </div>
     </section>

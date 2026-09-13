@@ -20,11 +20,13 @@ import { RESTAURANTS_DATA } from "../data/chennaiData";
 interface RestaurantsSectionProps {
   searchQuery: string;
   onTableReserved: (reservation: TableReservation) => void;
+  onLocateOnMap?: (id: string) => void;
 }
 
 export const RestaurantsSection: React.FC<RestaurantsSectionProps> = ({
   searchQuery,
   onTableReserved,
+  onLocateOnMap,
 }) => {
   const [selectedCategory, setSelectedCategory] = useState<string>("All");
   const [selectedPrice, setSelectedPrice] = useState<string>("All");
@@ -218,15 +220,25 @@ export const RestaurantsSection: React.FC<RestaurantsSectionProps> = ({
               </div>
 
               {/* Action Button */}
-              <div className="p-4 pt-0">
+              <div className="p-4 pt-0 flex items-center gap-2">
                 <button
                   onClick={() => setReservingRestaurant(restaurant)}
-                  className="w-full py-2.5 rounded-xl bg-amber-600 hover:bg-amber-500 text-stone-950 font-bold text-xs shadow-md transition-colors flex items-center justify-center gap-1.5"
+                  className="flex-1 py-2.5 rounded-xl bg-amber-600 hover:bg-amber-500 text-stone-950 font-bold text-xs shadow-md transition-colors flex items-center justify-center gap-1.5"
                   id={`reserve-table-btn-${restaurant.id}`}
                 >
                   <Calendar className="w-3.5 h-3.5 text-stone-950" />
                   <span>Reserve Table</span>
                 </button>
+
+                {onLocateOnMap && (
+                  <button
+                    onClick={() => onLocateOnMap(`restaurant-${restaurant.id}`)}
+                    className="p-2.5 rounded-xl bg-stone-800 hover:bg-stone-700 text-amber-400 border border-stone-700 transition"
+                    title="View restaurant on Google Map"
+                  >
+                    <MapPin className="w-4 h-4" />
+                  </button>
+                )}
               </div>
             </div>
           ))}

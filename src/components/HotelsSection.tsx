@@ -20,11 +20,13 @@ import { HOTELS_DATA } from "../data/chennaiData";
 interface HotelsSectionProps {
   searchQuery: string;
   onHotelBooked: (booking: HotelBooking) => void;
+  onLocateOnMap?: (id: string) => void;
 }
 
 export const HotelsSection: React.FC<HotelsSectionProps> = ({
   searchQuery,
   onHotelBooked,
+  onLocateOnMap,
 }) => {
   const [selectedType, setSelectedType] = useState<string>("All");
   const [bookingHotel, setBookingHotel] = useState<Hotel | null>(null);
@@ -227,18 +229,28 @@ export const HotelsSection: React.FC<HotelsSectionProps> = ({
               </div>
 
               {/* Booking CTA */}
-              <div className="p-4 pt-0">
+              <div className="p-4 pt-0 flex items-center gap-2">
                 <button
                   onClick={() => {
                     setBookingHotel(hotel);
                     setSelectedRoomIdx(0);
                   }}
-                  className="w-full py-2.5 rounded-xl bg-amber-600 hover:bg-amber-500 text-stone-950 font-bold text-xs shadow-md transition-colors flex items-center justify-center gap-1.5"
+                  className="flex-1 py-2.5 rounded-xl bg-amber-600 hover:bg-amber-500 text-stone-950 font-bold text-xs shadow-md transition-colors flex items-center justify-center gap-1.5"
                   id={`book-hotel-btn-${hotel.id}`}
                 >
                   <Calendar className="w-3.5 h-3.5 text-stone-950" />
                   <span>Book Stay Directly</span>
                 </button>
+
+                {onLocateOnMap && (
+                  <button
+                    onClick={() => onLocateOnMap(`hotel-${hotel.id}`)}
+                    className="p-2.5 rounded-xl bg-stone-800 hover:bg-stone-700 text-amber-400 border border-stone-700 transition"
+                    title="View hotel on Google Map"
+                  >
+                    <MapPin className="w-4 h-4" />
+                  </button>
+                )}
               </div>
             </div>
           ))}

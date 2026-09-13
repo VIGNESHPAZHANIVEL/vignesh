@@ -6,6 +6,7 @@
 import React, { useState, useEffect } from "react";
 import { Header } from "./components/Header";
 import { HeroBanner } from "./components/HeroBanner";
+import { GoogleMapView } from "./components/GoogleMapView";
 import { TransportSection } from "./components/TransportSection";
 import { ParkingSection } from "./components/ParkingSection";
 import { PlacesSection } from "./components/PlacesSection";
@@ -24,6 +25,7 @@ import {
 import {
   Sparkles,
   ArrowRight,
+  MapPin,
   Train,
   Car,
   Landmark,
@@ -38,6 +40,26 @@ export default function App() {
   const [searchQuery, setSearchQuery] = useState("");
   const [isAiModalOpen, setIsAiModalOpen] = useState(false);
   const [aiModalPrompt, setAiModalPrompt] = useState<string | undefined>(undefined);
+  const [mapFocusId, setMapFocusId] = useState<string | undefined>(undefined);
+  const [liveParkingLots, setLiveParkingLots] = useState<any[]>([]);
+
+  // Fetch live parking lots for map & parking synchronization
+  useEffect(() => {
+    async function fetchParking() {
+      try {
+        const res = await fetch("/api/parking/live");
+        if (res.ok) {
+          const data = await res.json();
+          if (data.lots) {
+            setLiveParkingLots(data.lots);
+          }
+        }
+      } catch (e) {
+        console.warn("Parking telemetry fallback active", e);
+      }
+    }
+    fetchParking();
+  }, []);
 
   // Saved Items & Bookings (with localStorage persistence)
   const [savedTripItems, setSavedTripItems] = useState<SavedTripItem[]>(() => {
@@ -146,6 +168,12 @@ export default function App() {
 
   const savedItemIds = savedTripItems.map((item) => item.id);
 
+  const handleLocateOnMap = (id?: string) => {
+    if (id) setMapFocusId(id);
+    setActiveTab("map");
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
   // If user enters search query and is on "explore", stay on current or switch to relevant view
   const handleCategorySelect = (tab: ActiveTab) => {
     setActiveTab(tab);
@@ -178,6 +206,34 @@ export default function App() {
 
             {/* Quick Section previews for All-in-One Experience */}
             <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8">
+              {/* Google Map Interactive Section */}
+              <div className="mb-12">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center gap-2">
+                    <MapPin className="w-5 h-5 text-amber-400" />
+                    <h2 className="text-xl sm:text-2xl font-bold font-serif text-white">
+                      Google Maps Explorer
+                    </h2>
+                  </div>
+                  <button
+                    onClick={() => handleCategorySelect("map")}
+                    className="text-xs font-semibold text-amber-400 hover:text-amber-300 flex items-center gap-1"
+                  >
+                    <span>Full Screen Map</span>
+                    <ArrowRight className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+                <GoogleMapView
+                  initialSelectedId={mapFocusId}
+                  onSelectTab={handleCategorySelect}
+                  savedItemIds={savedItemIds}
+                  onToggleSaveItem={handleToggleSaveItem}
+                  onTableReserved={handleTableReserved}
+                  onHotelBooked={handleHotelBooked}
+                  liveParkingLots={liveParkingLots}
+                />
+              </div>
+
               {/* Transport teaser */}
               <div className="mb-12">
                 <div className="flex items-center justify-between mb-4">
@@ -195,7 +251,7 @@ export default function App() {
                     <ArrowRight className="w-3.5 h-3.5" />
                   </button>
                 </div>
-                <TransportSection />
+                <TransportSection onLocateOnMap={handleLocateOnMap} />
               </div>
 
               {/* Parking teaser */}
@@ -215,7 +271,7 @@ export default function App() {
                     <ArrowRight className="w-3.5 h-3.5" />
                   </button>
                 </div>
-                <ParkingSection />
+                <ParkingSection onLocateOnMap={handleLocateOnMap} />
               </div>
 
               {/* Places teaser */}
@@ -239,6 +295,16 @@ export default function App() {
                   searchQuery={searchQuery}
                   savedItemIds={savedItemIds}
                   onToggleSaveItem={handleToggleSaveItem}
+                  onLocateOnMap={handleLocateOnMap}
+                  onSelectTab={handleCategorySelect}
+                  onTableReserved={handleTableReserved}
+                  onHotelBooked={handleHotelBooked}
+                  liveParkingLots={liveParkingLots}
+                  onOpenAiPlannerForPlace={(placeName) =>
+                    handleOpenAiWithPrompt(
+                      `Please create a customized day trip plan centered around visiting ${placeName} in Chennai, including nearby metro routes, parking advice, and authentic local eateries.`
+                    )
+                  }
                 />
               </div>
 
@@ -330,11 +396,15 @@ export default function App() {
                   onRemoveSavedItem={handleRemoveSavedItem}
                   reservations={tableReservations}
                   hotelBookings={hotelBookings}
-                  onOpenAiPlanner={() =>
+                  onOpenAiPlanner={(prompt) =>
                     handleOpenAiWithPrompt(
-                      "Please create a customized 2-day Chennai itinerary tailored for a first-time visitor."
+                      prompt ||
+                        "Please create a customized 2-day Chennai itinerary tailored for a first-time visitor."
                     )
                   }
+                  onLocateOnMap={handleLocateOnMap}
+                  onSelectTab={handleCategorySelect}
+                  liveParkingLots={liveParkingLots}
                 />
               </div>
             </div>
@@ -342,15 +412,37 @@ export default function App() {
         )}
 
         {/* Dedicated Tab Views */}
-        {activeTab === "transport" && <TransportSection />}
+        {activeTab === "map" && (
+          <GoogleMapView
+            initialSelectedId={mapFocusId}
+            onSelectTab={handleCategorySelect}
+            savedItemIds={savedItemIds}
+            onToggleSaveItem={handleToggleSaveItem}
+            onTableReserved={handleTableReserved}
+            onHotelBooked={handleHotelBooked}
+            liveParkingLots={liveParkingLots}
+          />
+        )}
 
-        {activeTab === "parking" && <ParkingSection />}
+        {activeTab === "transport" && <TransportSection onLocateOnMap={handleLocateOnMap} />}
+
+        {activeTab === "parking" && <ParkingSection onLocateOnMap={handleLocateOnMap} />}
 
         {activeTab === "places" && (
           <PlacesSection
             searchQuery={searchQuery}
             savedItemIds={savedItemIds}
             onToggleSaveItem={handleToggleSaveItem}
+            onLocateOnMap={handleLocateOnMap}
+            onSelectTab={handleCategorySelect}
+            onTableReserved={handleTableReserved}
+            onHotelBooked={handleHotelBooked}
+            liveParkingLots={liveParkingLots}
+            onOpenAiPlannerForPlace={(placeName) =>
+              handleOpenAiWithPrompt(
+                `Please create a customized day trip plan centered around visiting ${placeName} in Chennai, including nearby metro routes, parking advice, and authentic local eateries.`
+              )
+            }
           />
         )}
 
@@ -358,15 +450,22 @@ export default function App() {
           <RestaurantsSection
             searchQuery={searchQuery}
             onTableReserved={handleTableReserved}
+            onLocateOnMap={handleLocateOnMap}
           />
         )}
 
-        {activeTab === "shopping" && <ShoppingSection searchQuery={searchQuery} />}
+        {activeTab === "shopping" && (
+          <ShoppingSection
+            searchQuery={searchQuery}
+            onLocateOnMap={handleLocateOnMap}
+          />
+        )}
 
         {activeTab === "hotels" && (
           <HotelsSection
             searchQuery={searchQuery}
             onHotelBooked={handleHotelBooked}
+            onLocateOnMap={handleLocateOnMap}
           />
         )}
 
@@ -376,11 +475,15 @@ export default function App() {
             onRemoveSavedItem={handleRemoveSavedItem}
             reservations={tableReservations}
             hotelBookings={hotelBookings}
-            onOpenAiPlanner={() =>
+            onOpenAiPlanner={(prompt) =>
               handleOpenAiWithPrompt(
-                "Please generate an insider cultural itinerary for Chennai with food spots and historical temples."
+                prompt ||
+                  "Please generate an insider cultural itinerary for Chennai with food spots and historical temples."
               )
             }
+            onLocateOnMap={handleLocateOnMap}
+            onSelectTab={handleCategorySelect}
+            liveParkingLots={liveParkingLots}
           />
         )}
       </main>
